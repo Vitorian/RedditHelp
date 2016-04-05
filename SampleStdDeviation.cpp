@@ -4,6 +4,10 @@
 #include <time.h> // for time()
 #include <math.h> // for sqrt()
 
+
+// Post help /u/Josh18293
+// https://github.com/HFTrader/RedditHelp/blob/master/SampleStdDeviation.cpp
+
 // Compile with
 //   g++ SampleStdDeviation.cpp -o SampleStdDeviation
 
