@@ -60,6 +60,25 @@ void new_permutation( uint32_t pm_count, std::vector<uint32_t>& perm )
 }
 
 
+// Generate all permutations - this should be N! permutations
+// This is VERY wasteful if N is much greater than R
+void gen_permutations_wasteful( const uint32_t N, const uint32_t R )
+{
+    // Create an index of rings and initialize with 1,2,3,4,5...,N
+    std::vector<uint32_t> idx(N);
+    for ( uint32_t j=0; j<N; ++j ) idx[j] = j;
+
+    // output the first trivial solution
+    std::vector<uint32_t> cur(R);
+    std::copy( &idx[0], &idx[R], &cur[0] );
+    new_permutation( 0, cur );
+
+    while ( std::next_permutation( &idx[0], &idx[N] ) ) {
+        std::copy( &idx[0], &idx[R], &cur[0] );
+        new_permutation( 0, cur );
+    }
+}
+
 // Generate all permutations (no order) - this should be N!/(N-R)! permutations
 // Taken from https://docs.python.org/2/library/itertools.html#itertools.permutations
 void gen_permutations( const uint32_t N, const uint32_t R )
@@ -154,7 +173,7 @@ void process( std::istream& ifs ) {
     // Now that we read all the rings, proceed to create all
     // possible permutations and compute the stacked power of
     // each of them, keeping the element's best
-    gen_permutations( numrings, 5 );
+    gen_permutations_wasteful( numrings, 5 );
 
     // Print the solution
     for ( uint32_t k=0; k<4; ++k ) {
