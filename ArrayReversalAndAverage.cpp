@@ -2,9 +2,6 @@
 #include <iostream>
 #include <limits> // for NaN()
 
-// Reddit help
-//  https://www.reddit.com/r/cpp_questions/comments/4dezx6/array_reversal_and_average/
-
 // Compile with
 //  g++ ArrayReversalAndAverage.cpp -o ArrayReversalAndAverage
 
