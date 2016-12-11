@@ -47,8 +47,6 @@ void genPermutations( const uint32_t N, const uint32_t R, Fn&& fn )
     } while( gotit );
 }
 
-
-
 struct Ring {
     int32_t elem[4];
 };
