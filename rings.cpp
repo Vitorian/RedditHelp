@@ -113,9 +113,11 @@ void process( std::istream& ifs ) {
 int main( int argc, char* argv[] )
 {
 
-    if ( argc>2 ) {
-        std::ifstream ifs( argv[1] );
-        process( ifs );
+    if ( argc>1 ) {
+        for ( uint32_t j=1; j<argc; ++j ) {
+            std::ifstream ifs( argv[j] );
+            process( ifs );
+        }
     }
     else {
         process( std::cin );
