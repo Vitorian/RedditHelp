@@ -6,6 +6,8 @@
 #include <sstream>   // for std::istringstream
 #include <algorithm> // for std::swap, std::copy
 
+#define PRINTDEBUG(...)
+//#define PRINTDEBUG printf
 
 // Represents a ring
 struct Ring {
@@ -28,7 +30,7 @@ static inline double calc_ring_power( int32_t pw0, int32_t pw1, int32_t pw2, int
 }
 
 // Receives the callback from gen_permutations() for each new permutation
-void new_permutation( uint32_t pm_count, std::vector<uint32_t>& perm )
+void new_permutation( uint32_t pm_count, uint32_t* perm, uint32_t elcount )
 {
     double pw[4];
     for ( uint32_t k = 0; k<4; ++k ) {
@@ -43,7 +45,7 @@ void new_permutation( uint32_t pm_count, std::vector<uint32_t>& perm )
     }
 
     // Print the ring IDs
-    printf( ">> Perm %d:  %d %d %d %d %d  ",
+    PRINTDEBUG( ">> Perm %d:  %d %d %d %d %d  ",
             pm_count, perm[0], perm[1], perm[2], perm[3], perm[4]  );
 
     // For each element, compare the current solution to the best solution so far
@@ -51,12 +53,12 @@ void new_permutation( uint32_t pm_count, std::vector<uint32_t>& perm )
         if ( pw[k]>bestpw[k] ) {
             bestpw[k] = pw[k];
             // print in a highlighted way for fanciness - these are just comments
-            printf( " [%2.0f] ", pw[k] );
+            PRINTDEBUG( " [%2.0f] ", pw[k] );
         } else {
-            printf( "  %2.0f  ", pw[k] );
+            PRINTDEBUG( "  %2.0f  ", pw[k] );
         }
     }
-    printf( "\n" );
+    PRINTDEBUG( "\n" );
 }
 
 
@@ -69,13 +71,10 @@ void gen_permutations_wasteful( const uint32_t N, const uint32_t R )
     for ( uint32_t j=0; j<N; ++j ) idx[j] = j;
 
     // output the first trivial solution
-    std::vector<uint32_t> cur(R);
-    std::copy( &idx[0], &idx[R], &cur[0] );
-    new_permutation( 0, cur );
+    new_permutation( 0, idx.data(), idx.size() );
 
     while ( std::next_permutation( &idx[0], &idx[N] ) ) {
-        std::copy( &idx[0], &idx[R], &cur[0] );
-        new_permutation( 0, cur );
+        new_permutation( 0, idx.data(), idx.size() );
     }
 }
 
@@ -94,11 +93,8 @@ void gen_permutations( const uint32_t N, const uint32_t R )
     std::vector<uint32_t> cyc(R);
     for ( uint32_t j=0; j<R; ++j ) cyc[j] = N-j;
 
-    std::vector<uint32_t> cur(R);
-    std::copy( &idx[0], &idx[R], &cur[0] );
-
     // output the first trivial solution
-    new_permutation( 0, cur );
+    new_permutation( 0, idx.data(), idx.size() );
 
     // Counts the number of permutations generated so far
     uint32_t count = 0;
@@ -114,11 +110,12 @@ void gen_permutations( const uint32_t N, const uint32_t R )
         uint32_t i = R;
         while ( i>0 ) {
             --i;
-            cyc[i]--;
-            if ( cyc[i] == 0 ) {
+            if ( --cyc[i] == 0 ) {
+                // cycle range [i,N)
                 uint32_t first = idx[i];
                 for ( uint32_t j=i; j<N-1; ++j ) idx[j] = idx[j+1];
                 idx[N-1] = first;
+                // reset cycle counter
                 cyc[i] = N-i;
             }
             else {
@@ -126,10 +123,7 @@ void gen_permutations( const uint32_t N, const uint32_t R )
 
                 // Swap two elements in the index array
                 std::swap( idx[i], idx[N-j] );
-
-                // copy the first R elements from the index array to the actual solution array
-                std::copy( &idx[0], &idx[R], &cur[0] );
-                new_permutation( ++count, cur );
+                new_permutation( ++count, idx.data(), idx.size() );
                 gotit = true;
                 break;
             }
