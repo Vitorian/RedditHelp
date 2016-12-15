@@ -88,15 +88,15 @@ private:
 
 
 template< class T >
-class Ring {
+class VitorianRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
-    Ring( uint32_t sz ) : size(sz) {
+    VitorianRing( uint32_t sz ) : size(sz) {
         data = (T*)std::malloc( size*SLOTSIZE );
         read_idx = 0;
         write_idx = 2*size;
     }
-    ~Ring() {
+    ~VitorianRing() {
         ::free( data );
     }
 
@@ -121,8 +121,8 @@ public:
         return false;
     }
 private:
-    Ring();
-    Ring( const Ring& );
+    VitorianRing();
+    VitorianRing( const VitorianRing& );
     volatile uint32_t read_idx;
     volatile uint32_t write_idx;
     const uint32_t size;
@@ -170,5 +170,5 @@ void test()
 int main( int argc, char* argv[] ) {
     test<SimpleRing<int>>();
     test<SnellmanRing<int>>();
-    test<Ring<int>>();
+    test<VitorianRing<int>>();
 }
