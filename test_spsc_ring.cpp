@@ -7,8 +7,9 @@
 #include <cstring>
 #include <cassert>
 #include <chrono>
+#include <atomic>
 
-template< class T >
+template< typename T, typename IndexT = uint32_t >
 class SimpleRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
@@ -41,13 +42,13 @@ public:
 private:
     SimpleRing();
     SimpleRing( const SimpleRing& );
-    volatile uint32_t read_idx;
-    volatile uint32_t write_idx;
+    std::atomic<IndexT> read_idx;
+    std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
 };
 
-template< class T >
+template< typename T, typename IndexT = uint32_t >
 class SnellmanRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
@@ -80,14 +81,14 @@ public:
 private:
     SnellmanRing();
     SnellmanRing( const SnellmanRing& );
-    volatile uint32_t read_idx;
-    volatile uint32_t write_idx;
+    std::atomic<IndexT> read_idx;
+    std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
 };
 
 
-template< class T >
+template< typename T, typename IndexT = uint32_t >
 class VitorianRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
@@ -123,8 +124,8 @@ public:
 private:
     VitorianRing();
     VitorianRing( const VitorianRing& );
-    volatile uint32_t read_idx;
-    volatile uint32_t write_idx;
+    std::atomic<IndexT> read_idx;
+    std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
 };
