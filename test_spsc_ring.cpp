@@ -9,17 +9,17 @@
 #include <chrono>
 #include <atomic>
 
-template< typename T, typename IndexT = uint32_t >
+template< typename T, typename IndexT = uint32_t, typename AllocT = std::allocator<T> >
 class SimpleRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
     SimpleRing( uint32_t sz ) : size(sz) {
-        data = (T*)std::malloc( size*SLOTSIZE );
+        data = allocator.allocate( size );
         read_idx = 0;
         write_idx = 0;
     }
     ~SimpleRing() {
-        ::free( data );
+        allocator.deallocate( data, size );
     }
     bool push( const T& obj ) {
         uint32_t next_idx = write_idx+1<size ? write_idx+1 : 0;
@@ -46,19 +46,20 @@ private:
     std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
+    AllocT allocator;
 };
 
-template< typename T, typename IndexT = uint32_t >
+template< typename T, typename IndexT = uint32_t, typename AllocT = std::allocator<T> >
 class SnellmanRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
     SnellmanRing( uint32_t sz ) : size(sz) {
-        data = (T*)std::malloc( size*SLOTSIZE );
+        data = allocator.allocate( sz );
         read_idx = 0;
         write_idx = 0;
     }
     ~SnellmanRing() {
-        ::free( data );
+        allocator.deallocate( data, size );
     }
     bool push( const T& obj ) {
         uint32_t numel = write_idx - read_idx;
@@ -85,20 +86,21 @@ private:
     std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
+    AllocT allocator;
 };
 
 
-template< typename T, typename IndexT = uint32_t >
+template< typename T, typename IndexT = uint32_t, typename AllocT = std::allocator<T> >
 class VitorianRing {
 public:
     static constexpr uint32_t SLOTSIZE = sizeof(T);
     VitorianRing( uint32_t sz ) : size(sz) {
-        data = (T*)std::malloc( size*SLOTSIZE );
+        data = allocator.allocate( sz );
         read_idx = 0;
         write_idx = 2*size;
     }
     ~VitorianRing() {
-        ::free( data );
+        allocator.deallocate( data, size );
     }
 
     bool push( const T& obj ) {
@@ -128,13 +130,14 @@ private:
     std::atomic<IndexT> write_idx;
     const uint32_t size;
     T* data;
+    AllocT allocator;
 };
 
 template< class RingT >
 void producer( RingT& rng, int count, int seed ) {
     for ( int j=0; j<count; ++j ) {
-        while ( !rng.push( j + seed ) )
-            std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+        while ( !rng.push( j + seed ) );
+            //std::this_thread::sleep_for( std::chrono::milliseconds(1) );
         //fprintf( stderr, " >> pushed %d\n", j+val );
     }
 }
@@ -143,8 +146,8 @@ template< class RingT >
 void consumer( RingT& rng, int count, int seed ) {
     for ( int j=0; j<count; ++j ) {
         int res;
-        while ( !rng.pop( res ) )
-            std::this_thread::sleep_for( std::chrono::milliseconds(1) );
+        while ( !rng.pop( res ) );
+            //std::this_thread::sleep_for( std::chrono::milliseconds(1) );
         //fprintf( stderr, " >> popped %d\n", res );
         assert( res==seed+j );
     }
