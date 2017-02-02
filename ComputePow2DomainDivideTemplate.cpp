@@ -38,10 +38,12 @@ void calcblocks( uint32_t bitsleft, uint32_t* values, uint32_t count,
         uint64_t carry;
         if ( ISHEAD ) {
             if ( bitsleft==0 ) {
-                // post END-OF-JOB and propagate
-                while ( (out.counter & 1)==1 ) WAIT();
-                out.nbits = 0;
-                out.counter++;
+                if ( HASNEXT ) { 
+                    // post END-OF-JOB and propagate
+                    while ( (out.counter & 1)==1 ) WAIT();
+                    out.nbits = 0;
+                    out.counter++;
+                }
                 break;
             }
             nb = std::min( NBITS, bitsleft );
