@@ -98,26 +98,31 @@ struct VarCodeFilter {
     Store& store;
 };
 
+template< typename Vector >
+struct ByteStorage {
+    ByteStorage( Vector& v ) : data(v) {}
+    void push( uint8_t byte ) {
+        data.push_back( byte );
+    }
+    Vector& data;
+};
+
 template < unsigned NBITS >
 struct CompressedStream
 {
-    CompressedStream() : varicode( cache ), cache( *this ) {}
-    void process( bool bit ) {
+    CompressedStream() : varicode( cache ), cache( store ), store(data) {}
+    void push( bool bit ) {
         varicode.push( bit );
-    }
-    void finish() {
-        varicode.flush();
-    }
-    void push( uint8_t byte ) {
-        data.push_back( byte );
     }
     void flush() {
         varicode.flush();
     }
-    using Cache = BitCache< CompressedStream<NBITS> >;
+    using Store = ByteStorage<std::vector<uint8_t>>;
+    using Cache = BitCache< Store >;
     using Encoder = VarCodeFilter< Cache, NBITS >;
     Encoder varicode;
     Cache cache;
+    Store store;
     std::vector<uint8_t> data;
 };
 
@@ -132,12 +137,12 @@ void process_file( std::istream& ifs )
         if ( std::isprint( ch ) ) {
             int upch = std::toupper( ch );
             bool isupper = (upch==ch);
-            bstream[upch].process( isupper );
+            bstream[upch].push( isupper );
             origbytes += 1;
         }
     }
     for ( Stream& cs : bstream ) {
-        cs.finish();
+        cs.flush();
     }
 
     for ( uint32_t j=0; j<256; ++j ) {
