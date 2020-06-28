@@ -1,5 +1,4 @@
-#ifndef COLLECTION_H
-#define COLLECTION_H
+#pragma once
 
 #include <iostream>
 #include "data.h"
@@ -74,5 +73,3 @@ public:
 	void setRightChild(treeNode * treeIn, treeNode  *childIn);
 	void writeOut(char * fileName);
 };
-
-#endif

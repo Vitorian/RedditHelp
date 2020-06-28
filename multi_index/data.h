@@ -1,34 +1,31 @@
-#ifndef DATA_H
-#define DATA_H
+#pragma once
+
 #include <iomanip>
 #include <iostream>
-#include <string>
+#include "vstring.h"
 
-using namespace std;
-
-class data
+struct data
 {
-	char * vendorName;
-	char * phoneNumber;
-	char * productType;
-	char * eventNotes;
-public:
-	data();
-	data(const data& dataIn);
- 	const data& operator= (const data * dataIn);
- 	const data& operator= (const data& dataIn);
- 	friend ostream& operator<< (ostream& out, const data * dataIn);
- 	friend ostream& operator<< (ostream& out, const data& dataIn);
-	~data();
-	void clear();
-	void getName(char * nameIn)const;
-	void getNumber(char * numIn)const;
-	void getProduct(char * typeIn)const;
-	void getEvents(char * eventIn)const;
-	void setName(char * nameIn);
-	void setNumber(char * numIn);
-	void setProduct(char * typeIn);
-	void setEvents(char * eventIn);
-};
+    vstring vendorName;
+    vstring phoneNumber;
+    vstring productType;
+    vstring eventNotes;
 
-#endif
+    friend inline ostream& operator<< (ostream& out, const data& dataIn )
+    {
+        out << dataIn.vendorName  << '\t'
+            << dataIn.phoneNumber << '\t'
+            << dataIn.productType << '\t'
+            << dataIn.eventNotes  << '\t' << endl;
+        return out;
+    }
+
+    void clear()
+    {
+        vendorName.clear();
+        phoneNumber.clear();
+        productType.clear();
+        eventNotest.clear();
+    }
+
+};

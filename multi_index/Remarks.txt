@@ -1,0 +1,5 @@
+Use #pragma once instead of header guards
+
+Do not include std in the global namespace (get rid of using namespace std)
+
+Use std::string instead of char*
