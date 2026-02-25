@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <array>
 #include <cstddef>
 #include <limits>
 #include <utility>
@@ -42,23 +43,26 @@ double callfn(FnPtr fn, const double* values) {
     return callfn_impl(fn, values, Indices{});
 }
 
-// Runtime dispatch: selects the correct callfn<N> instantiation based on the
-// argument count. Returns NaN for unsupported sizes (>10).
+// Maximum number of function arguments supported by the dispatch table.
+static constexpr size_t MAX_FN_ARGS = 32;
+
+// Dispatch function type: calls fn with N pre-determined arguments from an array.
+using DispatchFn = double(*)(FnPtr, const double*);
+
+// Builds a compile-time dispatch table: table[N] = &callfn<N> for N in 0..MAX.
+// The index_sequence expands into an array initializer of function pointers.
+template <std::size_t... I>
+constexpr std::array<DispatchFn, sizeof...(I)> make_dispatch_table(std::index_sequence<I...>) {
+    return {{ &callfn<I>... }};
+}
+
+static constexpr auto dispatch_table = make_dispatch_table(std::make_index_sequence<MAX_FN_ARGS + 1>{});
+
+// Runtime dispatch: indexes into the compile-time table to select the correct
+// callfn<N> instantiation. Returns NaN for unsupported sizes.
 inline double callfn(FnPtr fn, const double* args, size_t size) {
-    switch (size) {
-        case 0: return callfn<0>(fn, args);
-        case 1: return callfn<1>(fn, args);
-        case 2: return callfn<2>(fn, args);
-        case 3: return callfn<3>(fn, args);
-        case 4: return callfn<4>(fn, args);
-        case 5: return callfn<5>(fn, args);
-        case 6: return callfn<6>(fn, args);
-        case 7: return callfn<7>(fn, args);
-        case 8: return callfn<8>(fn, args);
-        case 9: return callfn<9>(fn, args);
-        case 10: return callfn<10>(fn, args);
-        default: return std::numeric_limits<double>::quiet_NaN();
-    }
+    if (size > MAX_FN_ARGS) return std::numeric_limits<double>::quiet_NaN();
+    return dispatch_table[size](fn, args);
 }
 
 }  // namespace Interpreter

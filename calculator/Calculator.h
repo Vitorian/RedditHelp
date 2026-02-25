@@ -35,6 +35,26 @@
 
 namespace Interpreter {
 
+// Factory function type: creates a FunctionCallWithArgs<N> for a given
+// function pointer and argument list.
+using FnCallFactory = Pointer<FunctionCall>(*)(FnPtr, const std::vector<NodePtr>&);
+
+// Factory function template: creates FunctionCallWithArgs<N>.
+template <std::size_t N>
+Pointer<FunctionCall> makeFunctionCall(FnPtr fn, const std::vector<NodePtr>& args) {
+    return Pointer<FunctionCall>(new FunctionCallWithArgs<N>(fn, args));
+}
+
+// Builds a compile-time factory table: table[N] = &makeFunctionCall<N>.
+template <std::size_t... I>
+constexpr std::array<FnCallFactory, sizeof...(I)>
+make_factory_table(std::index_sequence<I...>) {
+    return {{ &makeFunctionCall<I>... }};
+}
+
+static constexpr auto fn_call_factory_table =
+    make_factory_table(std::make_index_sequence<MAX_FN_ARGS + 1>{});
+
 // Calculator — the full expression parser.
 // Inherits Lexer's scanning primitives and adds grammar-level productions.
 struct Calculator : public Lexer {
@@ -133,25 +153,12 @@ struct Calculator : public Lexer {
     // Creates the correct FunctionCallWithArgs<N> node for a given function
     // name and argument list. Returns null if the function is unknown or if
     // the argument count doesn't match the function's declared arity.
-    // Uses a switch to select the right template instantiation at runtime.
+    // Indexes into a compile-time factory table to select the right template.
     Pointer<FunctionCall> createFunctionCall(std::string_view name,
                                              const std::vector<NodePtr>& args) {
         if (auto fn = findFunction(name)) {
-            if (args.size() == fn->num_args) {
-                switch (fn->num_args) {
-                    case 0:  return Pointer<FunctionCall>(new FunctionCallWithArgs<0>(fn->fnptr, args));
-                    case 1:  return Pointer<FunctionCall>(new FunctionCallWithArgs<1>(fn->fnptr, args));
-                    case 2:  return Pointer<FunctionCall>(new FunctionCallWithArgs<2>(fn->fnptr, args));
-                    case 3:  return Pointer<FunctionCall>(new FunctionCallWithArgs<3>(fn->fnptr, args));
-                    case 4:  return Pointer<FunctionCall>(new FunctionCallWithArgs<4>(fn->fnptr, args));
-                    case 5:  return Pointer<FunctionCall>(new FunctionCallWithArgs<5>(fn->fnptr, args));
-                    case 6:  return Pointer<FunctionCall>(new FunctionCallWithArgs<6>(fn->fnptr, args));
-                    case 7:  return Pointer<FunctionCall>(new FunctionCallWithArgs<7>(fn->fnptr, args));
-                    case 8:  return Pointer<FunctionCall>(new FunctionCallWithArgs<8>(fn->fnptr, args));
-                    case 9:  return Pointer<FunctionCall>(new FunctionCallWithArgs<9>(fn->fnptr, args));
-                    case 10: return Pointer<FunctionCall>(new FunctionCallWithArgs<10>(fn->fnptr, args));
-                    default: break;
-                }
+            if (args.size() == fn->num_args && fn->num_args <= MAX_FN_ARGS) {
+                return fn_call_factory_table[fn->num_args](fn->fnptr, args);
             }
         }
         return {};
