@@ -43,7 +43,7 @@ static constexpr const char* time_unit = "cycles";
 #else
 #include <chrono>
 uint64_t now() {
-    return std::chrono::high_resolution_clock::now().time_since_epoch().count();
+    return std::chrono::steady_clock::now().time_since_epoch().count();
 }
 static constexpr const char* time_unit = "ns";
 #endif
