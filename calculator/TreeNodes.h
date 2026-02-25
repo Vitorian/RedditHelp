@@ -21,8 +21,13 @@
 #include "Pointer.h"
 #include "Node.h"
 #include "FunctionOps.h"
+
+#include <array>
+#include <cstddef>
+#include <cstdint>
 #include <string>
 #include <string_view>
+#include <vector>
 
 namespace Interpreter {
 
@@ -46,7 +51,7 @@ struct Constant : public Node {
 // Evaluates to whatever its inner expression evaluates to.
 struct Parenthesis : public Node {
     Parenthesis(NodePtr n) {
-        node = n;
+        node = std::move(n);
     }
     NodePtr node;
 
@@ -99,8 +104,8 @@ struct BinaryOp : public Node {
 
     BinaryOp(Operation oper, NodePtr lhs, NodePtr rhs) {
         op = oper;
-        left = lhs;
-        right = rhs;
+        left = std::move(lhs);
+        right = std::move(rhs);
     }
 
     // Recursively evaluates both children and applies the operator.

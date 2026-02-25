@@ -9,6 +9,13 @@
 // Example: calc "2+3*4" "(2+3)*4"
 
 #include "Calculator.h"
+#include "Node.h"
+#include "Pointer.h"
+
+#include <cstdint>
+#include <cstdio>
+#include <exception>
+#include <string>
 
 // Optimization barrier — prevents the compiler from discarding the result
 // of a computation in a benchmarking loop. Uses an inline asm statement
@@ -45,41 +52,46 @@ static constexpr const char* time_unit = "ns";
 static constexpr int BENCH_ITERATIONS = 10000;
 
 int main(int argc, char* argv[]) {
-    if (argc < 2) {
-        printf("Usage: calc <expression>\n");
-        return 0;
-    }
-
-    Calculator calc;
-
-    // Process each command-line argument as an independent expression.
-    for (int j = 1; j < argc; ++j) {
-        std::string cmd = argv[j];
-        printf("Solving %s\n", cmd.c_str());
-
-        double value;
-
-        // Benchmark loop: parse and evaluate the expression BENCH_ITERATIONS
-        // times to get a stable average timing measurement.
-        uint64_t t0 = now();
-        for (int k = 0; k < BENCH_ITERATIONS; ++k) {
-            Pointer<Node> ast = calc.parse(cmd);
-
-            if (!ast) {
-                printf("Error: failed to parse expression '%s'\n", cmd.c_str());
-                return 1;
-            }
-
-            // Evaluate the AST to produce the numeric result.
-            value = ast->calc();
-
-            // Prevent the compiler from optimizing away the computation.
-            DoNotOptimize(value);
+    try {
+        if (argc < 2) {
+            printf("Usage: calc <expression>\n");
+            return 0;
         }
 
-        // Report results: the final computed value and average time per iteration.
-        uint64_t t1 = now();
-        double elapsed = (t1 - t0) / double(BENCH_ITERATIONS);
-        printf("Result: %f Avg:%.1f %s\n", value, elapsed, time_unit);
+        Calculator calc;
+
+        // Process each command-line argument as an independent expression.
+        for (int j = 1; j < argc; ++j) {
+            std::string cmd = argv[j];
+            printf("Solving %s\n", cmd.c_str());
+
+            double value;
+
+            // Benchmark loop: parse and evaluate the expression BENCH_ITERATIONS
+            // times to get a stable average timing measurement.
+            uint64_t t0 = now();
+            for (int k = 0; k < BENCH_ITERATIONS; ++k) {
+                Pointer<Node> ast = calc.parse(cmd);
+
+                if (!ast) {
+                    printf("Error: failed to parse expression '%s'\n", cmd.c_str());
+                    return 1;
+                }
+
+                // Evaluate the AST to produce the numeric result.
+                value = ast->calc();
+
+                // Prevent the compiler from optimizing away the computation.
+                DoNotOptimize(value);
+            }
+
+            // Report results: the final computed value and average time per iteration.
+            uint64_t t1 = now();
+            double elapsed = static_cast<double>(t1 - t0) / double(BENCH_ITERATIONS);
+            printf("Result: %f Avg:%.1f %s\n", value, elapsed, time_unit);
+        }
+    } catch (const std::exception& e) {
+        (void)fprintf(stderr, "Error: %s\n", e.what());
+        return 1;
     }
 }

@@ -4,12 +4,18 @@
 // primitives, AST nodes, function dispatch, the full parser, and the writer.
 
 #include "Calculator.h"
+#include "FunctionOps.h"
+#include "Lexer.h"
+#include "Node.h"
+#include "Pointer.h"
+#include "Predicates.h"
+#include "TreeNodes.h"
 #include "Writer.h"
 
 #include <gtest/gtest.h>
 #include <cmath>
-#include <limits>
 #include <string>
+#include <vector>
 
 using namespace Interpreter;
 
@@ -50,7 +56,7 @@ TEST(Pointer, ScopeDestruction) {
         Pointer<TestNode> p(raw);
         EXPECT_EQ(raw->_counter, 1);
         {
-            Pointer<TestNode> p2(p);
+            Pointer<TestNode> p2(p);  // NOLINT(performance-unnecessary-copy-initialization)
             EXPECT_EQ(raw->_counter, 2);
         }
         EXPECT_EQ(raw->_counter, 1);

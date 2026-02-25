@@ -20,15 +20,18 @@
 // Note: function() is defined but not yet wired into primitive(), so
 // function calls like log(10) are currently parsed as variable references.
 
-#include <cstdint>
-#include <cstdio>
-#include <string_view>
+#pragma once
 
-#include "Pointer.h"
-#include "TreeNodes.h"
 #include "Predicates.h"
 #include "Lexer.h"
-#include "FunctionOps.h"
+#include "TreeNodes.h"
+
+#include <cmath>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <unordered_map>
+#include <vector>
 
 namespace Interpreter {
 
@@ -147,6 +150,7 @@ struct Calculator : public Lexer {
                     case 8:  return Pointer<FunctionCall>(new FunctionCallWithArgs<8>(fn->fnptr, args));
                     case 9:  return Pointer<FunctionCall>(new FunctionCallWithArgs<9>(fn->fnptr, args));
                     case 10: return Pointer<FunctionCall>(new FunctionCallWithArgs<10>(fn->fnptr, args));
+                    default: break;
                 }
             }
         }

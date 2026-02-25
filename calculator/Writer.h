@@ -10,10 +10,13 @@
 // each node type and produce formatted output.
 
 #pragma once
+
 #include "TreeNodes.h"
-#include <vector>
-#include <cstring>
+
 #include <cstdio>
+#include <cstring>
+#include <string_view>
+#include <vector>
 
 namespace Interpreter {
 
@@ -31,8 +34,10 @@ struct Writer : public Visitor {
     // Formats a double value and appends it to the buffer.
     void write(double value) {
         char buf[64];
-        ::snprintf(buf, sizeof(buf), "%f", value);
-        write(buf);
+        int len = ::snprintf(buf, sizeof(buf), "%f", value);
+        if (len > 0) {
+            write(std::string_view(buf, static_cast<size_t>(len)));
+        }
     }
 
     // Appends raw text (string_view) to the buffer via memcpy.

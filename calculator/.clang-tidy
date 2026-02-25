@@ -1,0 +1,17 @@
+---
+InheritParentConfig: false
+Checks: >
+  clang-diagnostic-*,
+  clang-analyzer-*,
+  bugprone-*,
+  cert-*,
+  performance-*,
+  readability-*,
+  misc-include-cleaner,
+  -bugprone-assignment-in-if-condition,
+  -bugprone-unchecked-optional-access,
+  -bugprone-easily-swappable-parameters,
+  -performance-enum-size,
+  -readability-identifier-length,
+  -readability-magic-numbers
+HeaderFilterRegex: '.*\.h$'

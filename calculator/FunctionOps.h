@@ -10,11 +10,9 @@
 
 #pragma once
 
-#include "Pointer.h"
-#include "Node.h"
-
+#include <cstddef>
 #include <limits>
-#include <string_view>
+#include <utility>
 
 namespace Interpreter {
 
@@ -59,8 +57,8 @@ inline double callfn(FnPtr fn, const double* args, size_t size) {
         case 8: return callfn<8>(fn, args);
         case 9: return callfn<9>(fn, args);
         case 10: return callfn<10>(fn, args);
+        default: return std::numeric_limits<double>::quiet_NaN();
     }
-    return std::numeric_limits<double>::quiet_NaN();
 }
 
 }  // namespace Interpreter

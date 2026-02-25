@@ -16,13 +16,15 @@
 
 #pragma once
 
+#include "Predicates.h"
 #include "Pointer.h"
 #include "TreeNodes.h"
 
 #include <cmath>
-#include <string_view>
-#include <stack>
+#include <cstddef>
 #include <optional>
+#include <stack>
+#include <string_view>
 
 namespace Interpreter {
 
@@ -170,17 +172,17 @@ public:
             if (test(ischar('.'))) {
                 if (auto sfrac = skip(isdigit())) {
                     size_t fval = svtoul(sfrac.value());  // fractional digits as int
-                    ssize_t len = sfrac.value().size();   // number of fractional digits
+                    size_t len = sfrac.value().size();    // number of fractional digits
                     ival = ipow10(ival, len);             // scale integer part up
                     double dval =
-                        (ival + fval) * pow(10, -len);  // combine and scale back down
+                        static_cast<double>(ival + fval) * pow(10, -static_cast<double>(len));  // combine and scale back down
                     commit();
                     return neg ? -dval : dval;
                 }
             }
 
             // No decimal point — return the integer part as double.
-            double dval = ival;
+            double dval = static_cast<double>(ival);
             commit();
             return neg ? -dval : dval;
         }
@@ -199,6 +201,7 @@ public:
                 case '-': return BinaryOp::Operation::Subtraction;
                 case '*': return BinaryOp::Operation::Multiplication;
                 case '/': return BinaryOp::Operation::Division;
+                default: break;
             }
         }
         return {};

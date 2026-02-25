@@ -10,7 +10,7 @@
 
 #pragma once
 
-#include <cstddef>
+#include <cctype>
 #include <string_view>
 
 namespace Interpreter {
