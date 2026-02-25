@@ -12,6 +12,5 @@ Checks: >
   -bugprone-unchecked-optional-access,
   -bugprone-easily-swappable-parameters,
   -performance-enum-size,
-  -readability-identifier-length,
-  -readability-magic-numbers
+  -readability-identifier-length
 HeaderFilterRegex: '.*\.h$'

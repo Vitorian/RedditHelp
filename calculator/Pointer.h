@@ -50,18 +50,18 @@ struct RefCounted {
     RefCounted(RefCounted&&) = delete;
 
     // Called by boost::intrusive_ptr on copy/assignment.
-    friend void intrusive_ptr_add_ref(RefCounted* p) {
-        p->_counter += 1;
+    friend void intrusive_ptr_add_ref(RefCounted* ptr) {
+        ptr->_counter += 1;
     }
 
     // Called by boost::intrusive_ptr on destruction/reset.
     // Deletes the object when the last reference is released.
-    friend void intrusive_ptr_release(RefCounted* p) {
-        if (p->_counter > 1) {
-            p->_counter--;
+    friend void intrusive_ptr_release(RefCounted* ptr) {
+        if (ptr->_counter > 1) {
+            ptr->_counter--;
             return;
         }
-        delete p;
+        delete ptr;
     }
 
     int _counter = 0;

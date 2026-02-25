@@ -27,6 +27,7 @@
 #include <cstdint>
 #include <string>
 #include <string_view>
+#include <utility>
 #include <vector>
 
 namespace Interpreter {
@@ -91,8 +92,8 @@ struct BinaryOp : public Node {
 
     // Returns the precedence level of an operator.
     // Higher values bind more tightly: mul/div (2) > add/sub (1) > NA (0).
-    static int precedence(Operation op) {
-        switch (op) {
+    static int precedence(Operation oper) {
+        switch (oper) {
             case Operation::NA: return 0;
             case Operation::Addition:
             case Operation::Subtraction: return 1;
@@ -167,8 +168,8 @@ struct FunctionCall : public Node {};
 // Stores arguments in a fixed-size array and dispatches through callfn().
 template <size_t N>
 struct FunctionCallWithArgs : public FunctionCall {
-    FunctionCallWithArgs(FnPtr fn, const std::vector<NodePtr>& arguments) {
-        fnptr = fn;
+    FunctionCallWithArgs(FnPtr func, const std::vector<NodePtr>& arguments) {
+        fnptr = func;
         // Copy the first N argument nodes from the parser's dynamic vector
         // into the fixed-size array.
         for (unsigned j = 0; j < N; ++j) {

@@ -69,7 +69,7 @@ int main(int argc, char* argv[]) {
 
             // Benchmark loop: parse and evaluate the expression BENCH_ITERATIONS
             // times to get a stable average timing measurement.
-            uint64_t t0 = now();
+            uint64_t start = now();
             for (int k = 0; k < BENCH_ITERATIONS; ++k) {
                 Pointer<Node> ast = calc.parse(cmd);
 
@@ -86,8 +86,8 @@ int main(int argc, char* argv[]) {
             }
 
             // Report results: the final computed value and average time per iteration.
-            uint64_t t1 = now();
-            double elapsed = static_cast<double>(t1 - t0) / double(BENCH_ITERATIONS);
+            uint64_t stop = now();
+            double elapsed = static_cast<double>(stop - start) / double(BENCH_ITERATIONS);
             printf("Result: %f Avg:%.1f %s\n", value, elapsed, time_unit);
         }
     } catch (const std::exception& e) {

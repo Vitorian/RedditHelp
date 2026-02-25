@@ -17,7 +17,6 @@
 #pragma once
 
 #include "Predicates.h"
-#include "Pointer.h"
 #include "TreeNodes.h"
 
 #include <cmath>
@@ -33,6 +32,9 @@ namespace Interpreter {
 // of saved positions for speculative parsing.
 struct Lexer {
     using sviterator = std::string_view::iterator;
+
+    // Decimal number base used in digit parsing.
+    static constexpr size_t kDecimalBase = 10;
 
     Lexer() {
     }
@@ -103,9 +105,9 @@ public:
     // Tests the current character against a predicate. If it matches,
     // advances the iterator and returns the character. Otherwise returns empty.
     template <typename Fn>
-    std::optional<char> test(Fn&& fn) {
+    std::optional<char> test(Fn&& pred) {
         if (it != code.end()) {
-            if (fn(*it)) {
+            if (pred(*it)) {
                 return *it++;
             }
         }
@@ -115,10 +117,10 @@ public:
     // Consumes characters while the predicate holds, returning the matched
     // span as a string_view. Returns empty if no characters matched.
     template <typename Fn>
-    std::optional<std::string_view> skip(Fn&& fn) {
+    std::optional<std::string_view> skip(Fn&& pred) {
         sviterator start = it;
         for (; it != code.end(); ++it) {
-            if (!fn(*it)) {
+            if (!pred(*it)) {
                 break;
             }
         }
@@ -131,18 +133,18 @@ public:
 
     // Converts a digit-only string_view to size_t without heap allocation.
     // Assumes all characters are valid digits (caller must guarantee this).
-    static size_t svtoul(std::string_view sv) {
+    static size_t svtoul(std::string_view str) {
         size_t ival = 0;
-        for (char ch : sv) {
-            ival = 10 * ival + (ch - '0');
+        for (char chr : str) {
+            ival = kDecimalBase * ival + (chr - '0');
         }
         return ival;
     }
 
     // Parses an unsigned integer by consuming consecutive digits.
     std::optional<size_t> parseuint() {
-        if (auto s = skip(isdigit())) {
-            return {svtoul(s.value())};
+        if (auto digits = skip(isdigit())) {
+            return {svtoul(digits.value())};
         }
         return {};
     }
@@ -155,7 +157,7 @@ public:
     // Multiplies val by 10^iexp using integer arithmetic (no floating point).
     static size_t ipow10(size_t val, size_t iexp) {
         for (; iexp > 0; --iexp) {
-            val = val * 10;
+            val = val * kDecimalBase;
         }
         return val;
     }
@@ -182,7 +184,7 @@ public:
                     size_t len = sfrac.value().size();    // number of fractional digits
                     ival = ipow10(ival, len);             // scale integer part up
                     double dval =
-                        static_cast<double>(ival + fval) * pow(10, -static_cast<double>(len));  // combine and scale back down
+                        static_cast<double>(ival + fval) * pow(kDecimalBase, -static_cast<double>(len));  // combine and scale back down
                     commit();
                     return neg ? -dval : dval;
                 }
@@ -202,8 +204,8 @@ public:
     // Tries to consume an arithmetic operator (+, -, *, /) and returns the
     // corresponding BinaryOp::Operation enum value.
     std::optional<BinaryOp::Operation> arithop() {
-        if (auto s = test(isany("-+*/"))) {
-            switch (s.value()) {
+        if (auto sym = test(isany("-+*/"))) {
+            switch (sym.value()) {
                 case '+': return BinaryOp::Operation::Addition;
                 case '-': return BinaryOp::Operation::Subtraction;
                 case '*': return BinaryOp::Operation::Multiplication;

@@ -19,63 +19,63 @@ namespace Interpreter {
 // Matches C-style identifiers: first char is [a-zA-Z_], rest are [a-zA-Z0-9_].
 // Stateful: tracks position via an internal counter.
 struct isidentifier {
-    bool operator()(char ch) {
+    bool operator()(char chr) {
         // First character: must be alpha or underscore
         if (counter++ == 0) {
-            return (ch == '_') || (std::isalpha(ch) != 0);
+            return (chr == '_') || (std::isalpha(chr) != 0);
         }
         // Subsequent characters: also allow digits
-        return (ch == '_') || (std::isalnum(ch) != 0);
+        return (chr == '_') || (std::isalnum(chr) != 0);
     }
     int counter = 0;
 };
 
 // Matches any alphabetic character [a-zA-Z].
 struct isalpha {
-    bool operator()(char ch) {
-        return (std::isalpha(ch) != 0);
+    bool operator()(char chr) {
+        return (std::isalpha(chr) != 0);
     }
 };
 
 // Matches any digit [0-9].
 struct isdigit {
-    bool operator()(char ch) {
-        return (std::isdigit(ch) != 0);
+    bool operator()(char chr) {
+        return (std::isdigit(chr) != 0);
     }
 };
 
 // Matches any alphanumeric character [a-zA-Z0-9].
 struct isalnum {
-    bool operator()(char ch) {
-        return (std::isalnum(ch) != 0);
+    bool operator()(char chr) {
+        return (std::isalnum(chr) != 0);
     }
 };
 
 // Matches any whitespace character (space, tab, newline, etc.).
 struct isspace {
-    bool operator()(char ch) {
-        return (std::isspace(ch) != 0);
+    bool operator()(char chr) {
+        return (std::isspace(chr) != 0);
     }
 };
 
 // Matches a specific single character.
 struct ischar {
-    ischar(char ch) : c(ch) {
+    ischar(char val) : chr(val) {
     }
-    bool operator()(char ch) const {
-        return (ch == c);
+    bool operator()(char val) const {
+        return (val == chr);
     }
-    char c;
+    char chr;
 };
 
 // Matches any character present in the given string_view.
 struct isany {
-    isany(std::string_view sv) : _sv(sv) {
+    isany(std::string_view str) : _str(str) {
     }
-    bool operator()(char ch) const {
-        return std::any_of(_sv.begin(), _sv.end(), [ch](char c) { return c == ch; });
+    bool operator()(char chr) const {
+        return std::any_of(_str.begin(), _str.end(), [chr](char val) { return val == chr; });
     }
-    std::string_view _sv;
+    std::string_view _str;
 };
 
 }  // namespace Interpreter

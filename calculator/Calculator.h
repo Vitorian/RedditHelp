@@ -22,15 +22,20 @@
 
 #pragma once
 
-#include "Predicates.h"
+#include "FunctionOps.h"
 #include "Lexer.h"
+#include "Pointer.h"
+#include "Predicates.h"
 #include "TreeNodes.h"
 
+#include <array>
 #include <cmath>
+#include <cstddef>
 #include <optional>
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace Interpreter {
@@ -41,8 +46,8 @@ using FnCallFactory = Pointer<FunctionCall>(*)(FnPtr, const std::vector<NodePtr>
 
 // Factory function template: creates FunctionCallWithArgs<N>.
 template <std::size_t N>
-Pointer<FunctionCall> makeFunctionCall(FnPtr fn, const std::vector<NodePtr>& args) {
-    return Pointer<FunctionCall>(new FunctionCallWithArgs<N>(fn, args));
+Pointer<FunctionCall> makeFunctionCall(FnPtr func, const std::vector<NodePtr>& args) {
+    return Pointer<FunctionCall>(new FunctionCallWithArgs<N>(func, args));
 }
 
 // Builds a compile-time factory table: table[N] = &makeFunctionCall<N>.
@@ -73,10 +78,10 @@ struct Calculator : public Lexer {
     NodePtr parenthesis() {
         StackSaver saver(this);
         if (test(ischar('('))) {
-            if (auto xp = expression()) {
+            if (auto expr = expression()) {
                 if (test(ischar(')'))) {
                     saver.commit();
-                    return NodePtr(new Parenthesis(xp));
+                    return NodePtr(new Parenthesis(expr));
                 }
             }
         }
@@ -103,14 +108,14 @@ struct Calculator : public Lexer {
     //   After:   (lhs OP rhs_left) RHSOP rhs_right   [correct: OP binds tighter]
     //
     // Otherwise, we simply create: (lhs OP rhs).
-    static void adjustPrecedence(NodePtr& lhs, NodePtr& rhs, BinaryOp::Operation op) {
+    static void adjustPrecedence(NodePtr& lhs, NodePtr& rhs, BinaryOp::Operation oper) {
         auto binop = rhs.as<BinaryOp>();
-        if (binop && (BinaryOp::precedence(binop->op) < BinaryOp::precedence(op))) {
+        if (binop && (BinaryOp::precedence(binop->op) < BinaryOp::precedence(oper))) {
             // Steal rhs's left child as our right operand, push ourselves down.
-            binop->left.reset(new BinaryOp(op, lhs, binop->left));
+            binop->left.reset(new BinaryOp(oper, lhs, binop->left));
             lhs = rhs;
         } else {
-            lhs.reset(new BinaryOp(op, lhs, rhs));
+            lhs.reset(new BinaryOp(oper, lhs, rhs));
         }
     }
 
@@ -122,9 +127,9 @@ struct Calculator : public Lexer {
         skipws();
         if (auto lhs = primitive()) {
             // Greedily consume "op rhs" pairs.
-            while (auto op = arithop()) {
+            while (auto oper = arithop()) {
                 if (auto rhs = expression()) {
-                    adjustPrecedence(lhs, rhs, op.value());
+                    adjustPrecedence(lhs, rhs, oper.value());
                 }
             }
             saver.commit();
@@ -156,9 +161,9 @@ struct Calculator : public Lexer {
     // Indexes into a compile-time factory table to select the right template.
     Pointer<FunctionCall> createFunctionCall(std::string_view name,
                                              const std::vector<NodePtr>& args) {
-        if (auto fn = findFunction(name)) {
-            if (args.size() == fn->num_args && fn->num_args <= MAX_FN_ARGS) {
-                return fn_call_factory_table[fn->num_args](fn->fnptr, args);
+        if (auto func = findFunction(name)) {
+            if (args.size() == func->num_args && func->num_args <= MAX_FN_ARGS) {
+                return fn_call_factory_table[func->num_args](func->fnptr, args);
             }
         }
         return {};
@@ -173,8 +178,8 @@ struct Calculator : public Lexer {
             if (test(ischar('('))) {
                 std::vector<NodePtr> args;
                 // Parse the first argument (if any).
-                if (auto xp = expression()) {
-                    args.push_back(xp);
+                if (auto expr = expression()) {
+                    args.push_back(expr);
                     // Parse subsequent comma-separated arguments.
                     while (test(ischar(','))) {
                         if (auto next = expression()) {
@@ -183,9 +188,9 @@ struct Calculator : public Lexer {
                     }
                 }
                 if (test(ischar(')'))) {
-                    if (auto fn = createFunctionCall(name.value(), args)) {
+                    if (auto call = createFunctionCall(name.value(), args)) {
                         saver.commit();
-                        return fn;
+                        return call;
                     }
                 }
             }
@@ -196,9 +201,9 @@ struct Calculator : public Lexer {
     // Looks up a function by name in the function map.
     // Returns a copy of the Function descriptor, or empty if not found.
     std::optional<Function> findFunction(std::string_view name) {
-        auto fn = _function_map.find(std::string(name));
-        if (fn != _function_map.end()) {
-            return fn->second;
+        auto iter = _function_map.find(std::string(name));
+        if (iter != _function_map.end()) {
+            return iter->second;
         }
         return {};
     }

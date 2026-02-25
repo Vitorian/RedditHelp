@@ -11,7 +11,7 @@
 
 #pragma once
 
-#include "TreeNodes.h"
+#include "Node.h"
 
 #include <cstdio>
 #include <cstring>
@@ -33,7 +33,8 @@ struct Writer : public Visitor {
 
     // Formats a double value and appends it to the buffer.
     void write(double value) {
-        char buf[64];
+        constexpr int kBufSize = 64;
+        char buf[kBufSize];
         int len = ::snprintf(buf, sizeof(buf), "%f", value);
         if (len > 0) {
             write(std::string_view(buf, static_cast<size_t>(len)));
@@ -41,10 +42,10 @@ struct Writer : public Visitor {
     }
 
     // Appends raw text (string_view) to the buffer via memcpy.
-    void write(std::string_view sv) {
+    void write(std::string_view str) {
         size_t size = data.size();
-        data.resize(size + sv.size());
-        memcpy(&data[size], sv.data(), sv.size());
+        data.resize(size + str.size());
+        memcpy(&data[size], str.data(), str.size());
     }
 };
 

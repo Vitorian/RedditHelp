@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+// NOLINTBEGIN(readability-magic-numbers)
+
 using namespace Interpreter;
 
 // ===== Pointer.h — RefCounted & Pointer<T> =====
@@ -53,10 +55,10 @@ TEST(Pointer, RefCountAddRelease) {
 TEST(Pointer, ScopeDestruction) {
     auto* raw = new TestNode;
     {
-        Pointer<TestNode> p(raw);
+        Pointer<TestNode> ptr(raw);
         EXPECT_EQ(raw->_counter, 1);
         {
-            Pointer<TestNode> p2(p);  // NOLINT(performance-unnecessary-copy-initialization)
+            Pointer<TestNode> ptr2(ptr);  // NOLINT(performance-unnecessary-copy-initialization)
             EXPECT_EQ(raw->_counter, 2);
         }
         EXPECT_EQ(raw->_counter, 1);
@@ -155,9 +157,9 @@ TEST(Lexer, StackSaverCommit) {
         saver.commit();
     }
     // After commit, position is advanced past 'a'
-    auto ch = lex.test(ischar('b'));
-    ASSERT_TRUE(ch.has_value());
-    EXPECT_EQ(ch.value(), 'b');
+    auto chr = lex.test(ischar('b'));
+    ASSERT_TRUE(chr.has_value());
+    EXPECT_EQ(chr.value(), 'b');
 }
 
 TEST(Lexer, StackSaverRestore) {
@@ -168,16 +170,16 @@ TEST(Lexer, StackSaverRestore) {
         // No commit → destructor restores
     }
     // Position should be back at 'a'
-    auto ch = lex.test(ischar('a'));
-    ASSERT_TRUE(ch.has_value());
-    EXPECT_EQ(ch.value(), 'a');
+    auto chr = lex.test(ischar('a'));
+    ASSERT_TRUE(chr.has_value());
+    EXPECT_EQ(chr.value(), 'a');
 }
 
 TEST(Lexer, TestMatch) {
     Lexer lex = makeLexer("+x");
-    auto ch = lex.test(ischar('+'));
-    ASSERT_TRUE(ch.has_value());
-    EXPECT_EQ(ch.value(), '+');
+    auto chr = lex.test(ischar('+'));
+    ASSERT_TRUE(chr.has_value());
+    EXPECT_EQ(chr.value(), '+');
     // Iterator advanced: next char is 'x'
     auto ch2 = lex.test(ischar('x'));
     ASSERT_TRUE(ch2.has_value());
@@ -185,15 +187,15 @@ TEST(Lexer, TestMatch) {
 
 TEST(Lexer, TestNoMatch) {
     Lexer lex = makeLexer("x");
-    auto ch = lex.test(ischar('+'));
-    EXPECT_FALSE(ch.has_value());
+    auto chr = lex.test(ischar('+'));
+    EXPECT_FALSE(chr.has_value());
 }
 
 TEST(Lexer, Skip) {
     Lexer lex = makeLexer("   abc");
-    auto ws = lex.skip(Interpreter::isspace());
-    ASSERT_TRUE(ws.has_value());
-    EXPECT_EQ(ws.value(), "   ");
+    auto wsp = lex.skip(Interpreter::isspace());
+    ASSERT_TRUE(wsp.has_value());
+    EXPECT_EQ(wsp.value(), "   ");
 }
 
 TEST(Lexer, ParseUint) {
@@ -244,9 +246,9 @@ TEST(Lexer, ParseDoubleEmpty) {
 TEST(Lexer, ArithOp) {
     auto check = [](const char* input, BinaryOp::Operation expected) {
         Lexer lex = makeLexer(input);
-        auto op = lex.arithop();
-        ASSERT_TRUE(op.has_value()) << "input: " << input;
-        EXPECT_EQ(op.value(), expected) << "input: " << input;
+        auto oper = lex.arithop();
+        ASSERT_TRUE(oper.has_value()) << "input: " << input;
+        EXPECT_EQ(oper.value(), expected) << "input: " << input;
     };
     check("+", BinaryOp::Operation::Addition);
     check("-", BinaryOp::Operation::Subtraction);
@@ -265,44 +267,44 @@ TEST(Lexer, SkipWs) {
 // ===== TreeNodes.h =====
 
 TEST(TreeNodes, ConstantCalc) {
-    Pointer<Constant> c(new Constant(7.5));
-    EXPECT_DOUBLE_EQ(c->calc(), 7.5);
+    Pointer<Constant> cst(new Constant(7.5));
+    EXPECT_DOUBLE_EQ(cst->calc(), 7.5);
 }
 
 TEST(TreeNodes, ParenthesisCalc) {
     NodePtr inner(new Constant(3.0));
-    Pointer<Parenthesis> p(new Parenthesis(inner));
-    EXPECT_DOUBLE_EQ(p->calc(), 3.0);
+    Pointer<Parenthesis> ptr(new Parenthesis(inner));
+    EXPECT_DOUBLE_EQ(ptr->calc(), 3.0);
 }
 
 TEST(TreeNodes, UnaryOpPositive) {
-    auto* u = new UnaryOp;
-    u->op = UnaryOp::Operation::Positive;
-    u->node = NodePtr(new Constant(10.0));
-    Pointer<UnaryOp> ptr(u);
+    auto* uop = new UnaryOp;
+    uop->op = UnaryOp::Operation::Positive;
+    uop->node = NodePtr(new Constant(10.0));
+    Pointer<UnaryOp> ptr(uop);
     EXPECT_DOUBLE_EQ(ptr->calc(), 10.0);
 }
 
 TEST(TreeNodes, UnaryOpNegative) {
-    auto* u = new UnaryOp;
-    u->op = UnaryOp::Operation::Negative;
-    u->node = NodePtr(new Constant(10.0));
-    Pointer<UnaryOp> ptr(u);
+    auto* uop = new UnaryOp;
+    uop->op = UnaryOp::Operation::Negative;
+    uop->node = NodePtr(new Constant(10.0));
+    Pointer<UnaryOp> ptr(uop);
     EXPECT_DOUBLE_EQ(ptr->calc(), -10.0);
 }
 
 TEST(TreeNodes, UnaryOpNA) {
-    auto* u = new UnaryOp;
-    u->op = UnaryOp::Operation::NA;
-    u->node = NodePtr(new Constant(10.0));
-    Pointer<UnaryOp> ptr(u);
+    auto* uop = new UnaryOp;
+    uop->op = UnaryOp::Operation::NA;
+    uop->node = NodePtr(new Constant(10.0));
+    Pointer<UnaryOp> ptr(uop);
     EXPECT_DOUBLE_EQ(ptr->calc(), 10.0);
 }
 
 TEST(TreeNodes, BinaryOpAllFour) {
-    auto make = [](BinaryOp::Operation op, double a, double b) {
-        return Pointer<BinaryOp>(new BinaryOp(op, NodePtr(new Constant(a)),
-                                              NodePtr(new Constant(b))));
+    auto make = [](BinaryOp::Operation oper, double lhs, double rhs) {
+        return Pointer<BinaryOp>(new BinaryOp(oper, NodePtr(new Constant(lhs)),
+                                              NodePtr(new Constant(rhs))));
     };
     EXPECT_DOUBLE_EQ(make(BinaryOp::Operation::Addition, 2, 3)->calc(), 5.0);
     EXPECT_DOUBLE_EQ(make(BinaryOp::Operation::Subtraction, 10, 4)->calc(), 6.0);
@@ -319,20 +321,20 @@ TEST(TreeNodes, BinaryOpPrecedence) {
 }
 
 TEST(TreeNodes, Variable) {
-    Pointer<Variable> v(new Variable("x"));
-    EXPECT_DOUBLE_EQ(v->calc(), 0.0);  // default
-    v->value = 42.0;
-    EXPECT_DOUBLE_EQ(v->calc(), 42.0);
-    EXPECT_EQ(v->name, "x");
+    Pointer<Variable> var(new Variable("x"));
+    EXPECT_DOUBLE_EQ(var->calc(), 0.0);  // default
+    var->value = 42.0;
+    EXPECT_DOUBLE_EQ(var->calc(), 42.0);
+    EXPECT_EQ(var->name, "x");
 }
 
 TEST(TreeNodes, FunctionCallWithArgs) {
     // Use a simple 1-arg function
-    auto square = [](double x) -> double { return x * x; };
-    FnPtr fn = reinterpret_cast<FnPtr>(+square);  // + converts lambda to fn ptr
+    auto square = [](double val) -> double { return val * val; };
+    FnPtr func = reinterpret_cast<FnPtr>(+square);  // + converts lambda to fn ptr
 
     std::vector<NodePtr> args = {NodePtr(new Constant(5.0))};
-    Pointer<FunctionCallWithArgs<1>> call(new FunctionCallWithArgs<1>(fn, args));
+    Pointer<FunctionCallWithArgs<1>> call(new FunctionCallWithArgs<1>(func, args));
     EXPECT_DOUBLE_EQ(call->calc(), 25.0);
 }
 
@@ -340,32 +342,32 @@ TEST(TreeNodes, FunctionCallWithArgs) {
 
 TEST(FunctionOps, CallFn0Args) {
     auto fn0 = []() -> double { return 99.0; };
-    FnPtr fp = reinterpret_cast<FnPtr>(+fn0);
-    double result = callfn(fp, nullptr, 0);
+    FnPtr func = reinterpret_cast<FnPtr>(+fn0);
+    double result = callfn(func, nullptr, 0);
     EXPECT_DOUBLE_EQ(result, 99.0);
 }
 
 TEST(FunctionOps, CallFn1Arg) {
-    auto fn1 = [](double x) -> double { return x * 2; };
-    FnPtr fp = reinterpret_cast<FnPtr>(+fn1);
+    auto fn1 = [](double val) -> double { return val * 2; };
+    FnPtr func = reinterpret_cast<FnPtr>(+fn1);
     double args[] = {5.0};
-    double result = callfn(fp, args, 1);
+    double result = callfn(func, args, 1);
     EXPECT_DOUBLE_EQ(result, 10.0);
 }
 
 TEST(FunctionOps, CallFn2Args) {
-    auto fn2 = [](double a, double b) -> double { return a + b; };
-    FnPtr fp = reinterpret_cast<FnPtr>(+fn2);
+    auto fn2 = [](double lhs, double rhs) -> double { return lhs + rhs; };
+    FnPtr func = reinterpret_cast<FnPtr>(+fn2);
     double args[] = {3.0, 4.0};
-    double result = callfn(fp, args, 2);
+    double result = callfn(func, args, 2);
     EXPECT_DOUBLE_EQ(result, 7.0);
 }
 
 TEST(FunctionOps, CallFn3Args) {
-    auto fn3 = [](double a, double b, double c) -> double { return (a * b) + c; };
-    FnPtr fp = reinterpret_cast<FnPtr>(+fn3);
+    auto fn3 = [](double val1, double val2, double val3) -> double { return (val1 * val2) + val3; };
+    FnPtr func = reinterpret_cast<FnPtr>(+fn3);
     double args[] = {2.0, 3.0, 1.0};
-    double result = callfn(fp, args, 3);
+    double result = callfn(func, args, 3);
     EXPECT_DOUBLE_EQ(result, 7.0);
 }
 
@@ -499,23 +501,25 @@ TEST(Calculator, ParseFailureReturnsNull) {
 // ===== Writer.h =====
 
 TEST(Writer, WriteDouble) {
-    Writer w;
-    w.write(3.14);
-    std::string result(w.data.begin(), w.data.end());
+    Writer writer;
+    writer.write(3.14);
+    std::string result(writer.data.begin(), writer.data.end());
     EXPECT_NE(result.find("3.14"), std::string::npos);
 }
 
 TEST(Writer, WriteStringView) {
-    Writer w;
-    w.write(std::string_view("hello"));
-    std::string result(w.data.begin(), w.data.end());
+    Writer writer;
+    writer.write(std::string_view("hello"));
+    std::string result(writer.data.begin(), writer.data.end());
     EXPECT_EQ(result, "hello");
 }
 
 TEST(Writer, WriteAppends) {
-    Writer w;
-    w.write(std::string_view("ab"));
-    w.write(std::string_view("cd"));
-    std::string result(w.data.begin(), w.data.end());
+    Writer writer;
+    writer.write(std::string_view("ab"));
+    writer.write(std::string_view("cd"));
+    std::string result(writer.data.begin(), writer.data.end());
     EXPECT_EQ(result, "abcd");
 }
+
+// NOLINTEND(readability-magic-numbers)
