@@ -28,7 +28,9 @@ public:
     template <typename U>
     Pointer<U> as() const {
         U* ptr = dynamic_cast<U*>(this->get());
-        if (ptr != nullptr) return Pointer<U>(ptr);
+        if (ptr != nullptr) {
+            return Pointer<U>(ptr);
+        }
         return Pointer<U>();
     }
 
@@ -48,13 +50,13 @@ struct RefCounted {
     RefCounted(RefCounted&&) = delete;
 
     // Called by boost::intrusive_ptr on copy/assignment.
-    friend inline void intrusive_ptr_add_ref(RefCounted* p) {
+    friend void intrusive_ptr_add_ref(RefCounted* p) {
         p->_counter += 1;
     }
 
     // Called by boost::intrusive_ptr on destruction/reset.
     // Deletes the object when the last reference is released.
-    friend inline void intrusive_ptr_release(RefCounted* p) {
+    friend void intrusive_ptr_release(RefCounted* p) {
         if (p->_counter > 1) {
             p->_counter--;
             return;

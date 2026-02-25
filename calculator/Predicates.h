@@ -10,6 +10,7 @@
 
 #pragma once
 
+#include <algorithm>
 #include <cctype>
 #include <string_view>
 
@@ -20,7 +21,9 @@ namespace Interpreter {
 struct isidentifier {
     bool operator()(char ch) {
         // First character: must be alpha or underscore
-        if (counter++ == 0) return (ch == '_') || (std::isalpha(ch) != 0);
+        if (counter++ == 0) {
+            return (ch == '_') || (std::isalpha(ch) != 0);
+        }
         // Subsequent characters: also allow digits
         return (ch == '_') || (std::isalnum(ch) != 0);
     }
@@ -70,10 +73,7 @@ struct isany {
     isany(std::string_view sv) : _sv(sv) {
     }
     bool operator()(char ch) const {
-        for (char c : _sv) {
-            if (c == ch) return true;
-        }
-        return false;
+        return std::any_of(_sv.begin(), _sv.end(), [ch](char c) { return c == ch; });
     }
     std::string_view _sv;
 };

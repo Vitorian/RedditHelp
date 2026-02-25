@@ -30,7 +30,7 @@ using double_t = double;
 // parameters. The index_sequence<I...> provides compile-time indices to
 // subscript into the values array, producing: fn(values[0], values[1], ...).
 template <std::size_t... I>
-double callfn_impl(FnPtr fn, const double* values, std::index_sequence<I...>) {
+double callfn_impl(FnPtr fn, const double* values, std::index_sequence<I...> /*indices*/) {
     using CallType = double (*)(double_t<I>...);
     return reinterpret_cast<CallType>(fn)(values[I]...);
 }
@@ -52,7 +52,7 @@ using DispatchFn = double(*)(FnPtr, const double*);
 // Builds a compile-time dispatch table: table[N] = &callfn<N> for N in 0..MAX.
 // The index_sequence expands into an array initializer of function pointers.
 template <std::size_t... I>
-constexpr std::array<DispatchFn, sizeof...(I)> make_dispatch_table(std::index_sequence<I...>) {
+constexpr std::array<DispatchFn, sizeof...(I)> make_dispatch_table(std::index_sequence<I...> /*indices*/) {
     return {{ &callfn<I>... }};
 }
 
@@ -61,7 +61,9 @@ static constexpr auto dispatch_table = make_dispatch_table(std::make_index_seque
 // Runtime dispatch: indexes into the compile-time table to select the correct
 // callfn<N> instantiation. Returns NaN for unsupported sizes.
 inline double callfn(FnPtr fn, const double* args, size_t size) {
-    if (size > MAX_FN_ARGS) return std::numeric_limits<double>::quiet_NaN();
+    if (size > MAX_FN_ARGS) {
+        return std::numeric_limits<double>::quiet_NaN();
+    }
     return dispatch_table[size](fn, args);
 }
 

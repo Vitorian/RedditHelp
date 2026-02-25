@@ -28,7 +28,7 @@ struct Writer : public Visitor {
 
     // Called for each visited node. Currently a no-op; serves as the hook
     // point for subclasses to dispatch on concrete node types.
-    void visit(Node*) override {
+    void visit(Node* /*node*/) override {
     }
 
     // Formats a double value and appends it to the buffer.

@@ -90,10 +90,11 @@ public:
             _committed = true;
         }
         ~StackSaver() {
-            if (_committed)
+            if (_committed) {
                 _lexer->commit();
-            else
+            } else {
                 _lexer->restore();
+            }
         }
         bool _committed;
         Lexer* _lexer;
@@ -117,16 +118,20 @@ public:
     std::optional<std::string_view> skip(Fn&& fn) {
         sviterator start = it;
         for (; it != code.end(); ++it) {
-            if (!fn(*it)) break;
+            if (!fn(*it)) {
+                break;
+            }
         }
-        if (it == start) return {};
+        if (it == start) {
+            return {};
+        }
         // Construct a string_view from the matched range using pointer arithmetic.
         return std::string_view{&*start, size_t(it - start)};
     };
 
     // Converts a digit-only string_view to size_t without heap allocation.
     // Assumes all characters are valid digits (caller must guarantee this).
-    size_t svtoul(std::string_view sv) {
+    static size_t svtoul(std::string_view sv) {
         size_t ival = 0;
         for (char ch : sv) {
             ival = 10 * ival + (ch - '0');
@@ -149,7 +154,9 @@ public:
 
     // Multiplies val by 10^iexp using integer arithmetic (no floating point).
     static size_t ipow10(size_t val, size_t iexp) {
-        for (; iexp > 0; --iexp) val = val * 10;
+        for (; iexp > 0; --iexp) {
+            val = val * 10;
+        }
         return val;
     }
 

@@ -48,7 +48,7 @@ Pointer<FunctionCall> makeFunctionCall(FnPtr fn, const std::vector<NodePtr>& arg
 // Builds a compile-time factory table: table[N] = &makeFunctionCall<N>.
 template <std::size_t... I>
 constexpr std::array<FnCallFactory, sizeof...(I)>
-make_factory_table(std::index_sequence<I...>) {
+make_factory_table(std::index_sequence<I...> /*indices*/) {
     return {{ &makeFunctionCall<I>... }};
 }
 
@@ -103,7 +103,7 @@ struct Calculator : public Lexer {
     //   After:   (lhs OP rhs_left) RHSOP rhs_right   [correct: OP binds tighter]
     //
     // Otherwise, we simply create: (lhs OP rhs).
-    void adjustPrecedence(NodePtr& lhs, NodePtr& rhs, BinaryOp::Operation op) {
+    static void adjustPrecedence(NodePtr& lhs, NodePtr& rhs, BinaryOp::Operation op) {
         auto binop = rhs.as<BinaryOp>();
         if (binop && (BinaryOp::precedence(binop->op) < BinaryOp::precedence(op))) {
             // Steal rhs's left child as our right operand, push ourselves down.
@@ -197,7 +197,9 @@ struct Calculator : public Lexer {
     // Returns a copy of the Function descriptor, or empty if not found.
     std::optional<Function> findFunction(std::string_view name) {
         auto fn = _function_map.find(std::string(name));
-        if (fn != _function_map.end()) return fn->second;
+        if (fn != _function_map.end()) {
+            return fn->second;
+        }
         return {};
     }
 

@@ -200,7 +200,7 @@ TEST(Lexer, ParseUint) {
     Lexer lex = makeLexer("123abc");
     auto val = lex.parseuint();
     ASSERT_TRUE(val.has_value());
-    EXPECT_EQ(val.value(), 123u);
+    EXPECT_EQ(val.value(), 123U);
 }
 
 TEST(Lexer, ParseUintNonDigit) {
@@ -259,7 +259,7 @@ TEST(Lexer, SkipWs) {
     lex.skipws();
     auto val = lex.parseuint();
     ASSERT_TRUE(val.has_value());
-    EXPECT_EQ(val.value(), 42u);
+    EXPECT_EQ(val.value(), 42U);
 }
 
 // ===== TreeNodes.h =====
@@ -362,7 +362,7 @@ TEST(FunctionOps, CallFn2Args) {
 }
 
 TEST(FunctionOps, CallFn3Args) {
-    auto fn3 = [](double a, double b, double c) -> double { return a * b + c; };
+    auto fn3 = [](double a, double b, double c) -> double { return (a * b) + c; };
     FnPtr fp = reinterpret_cast<FnPtr>(+fn3);
     double args[] = {2.0, 3.0, 1.0};
     double result = callfn(fp, args, 3);
