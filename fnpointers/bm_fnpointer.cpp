@@ -1,6 +1,7 @@
 
 
 #include <benchmark/benchmark.h>
+#include <array>
 #include <vector>
 #include <iostream>
 
