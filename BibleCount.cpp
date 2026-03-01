@@ -2,16 +2,15 @@
 #include <cstdint>
 #include <cstring>
 #include <fstream>
-#include <functional>
 #include <iostream>
 #include <sstream>
-#include <vector>
 
 // Download text from
 // https://raw.githubusercontent.com/mxw/grmr/master/src/finaltests/bible.txt
 
 static std::string slurp(std::istream& in)
 {
+	// Read entire stream into one contiguous string.
 	std::stringstream sstr;
 	sstr << in.rdbuf();
 	return sstr.str();
@@ -19,6 +18,7 @@ static std::string slurp(std::istream& in)
 
 template <typename ByteSink>
 struct BitCache {
+	// Packs variable-sized bit chunks into a 64-bit cache and emits bytes to sink.
 	explicit BitCache(ByteSink& fcn)
 	    : sink(fcn)
 	{
@@ -28,6 +28,7 @@ struct BitCache {
 
 	void commit()
 	{
+		// Cache is full (64 bits): emit 8 bytes, least-significant byte first.
 		for (uint32_t j = 0; j < 8; ++j) {
 			sink.push(uint8_t(cache));
 			cache >>= 8U;
@@ -36,6 +37,7 @@ struct BitCache {
 
 	void push(uint64_t bits, uint32_t count)
 	{
+		// Append 'count' bits from 'bits' into cache, committing as needed.
 		if (counter + count > 64) {
 			cache |= bits << counter;
 			commit();
@@ -55,6 +57,7 @@ struct BitCache {
 
 	void flush()
 	{
+		// Emit any partially filled bytes at end of stream.
 		while (counter > 0) {
 			sink.push(uint8_t(cache));
 			cache >>= 8U;
@@ -74,6 +77,7 @@ struct BitCache {
 
 template <typename Store, uint32_t MAXBITS>
 struct VarCodeFilter {
+	// Encodes upper/lower case runs into variable-length codewords.
 	explicit VarCodeFilter(Store& s)
 	    : store(s)
 	{
@@ -81,6 +85,7 @@ struct VarCodeFilter {
 	}
 	void push(bool isupper)
 	{
+		// Uppercase emits full-length marker; lowercase extends the run.
 		if (isupper) {
 			pack();
 			store.push(1U << (MAXBITS - 1), MAXBITS);
@@ -93,6 +98,7 @@ struct VarCodeFilter {
 	}
 	void pack()
 	{
+		// Flush pending lowercase run as a shorter marker.
 		if (counter > 0) {
 			uint32_t nbits = MAXBITS - counter;
 			store.push(1U << (nbits - 1), nbits);
@@ -110,6 +116,7 @@ struct VarCodeFilter {
 
 struct ByteStorage
 {
+	// Minimal growable byte buffer used by the bit writer.
 	ByteStorage()
 	{
 		count = 0;
@@ -122,10 +129,15 @@ struct ByteStorage
 	}
 	ByteStorage& operator=(const ByteStorage& rhs)
 	{
+		if (this == &rhs) {
+			return *this;
+		}
+
+		::free(ptr);
 		count = rhs.count;
 		capacity = rhs.capacity;
 		ptr = static_cast<uint8_t*>(::malloc(rhs.capacity));
-		std::memcpy(ptr, rhs.ptr, capacity);
+		std::memcpy(ptr, rhs.ptr, count);
 		return *this;
 	}
 	ByteStorage(const ByteStorage&& rhs) = delete;
@@ -140,6 +152,7 @@ struct ByteStorage
 	}
 	void push(uint8_t byte)
 	{
+		// Double capacity on demand.
 		if (count == capacity) {
 			capacity = 2 * capacity;
 			ptr = static_cast<uint8_t*>(::realloc(ptr, capacity));
@@ -173,9 +186,10 @@ struct ByteStorage
 
 template <unsigned NBITS>
 struct CompressedStream {
+	// Pipeline: VarCodeFilter -> BitCache -> ByteStorage.
 	CompressedStream()
-	    : varicode(cache)
-	    , cache(store)
+	    : cache(store)
+	    , varicode(cache)
 	{
 	}
 	void push(bool bit)
@@ -189,13 +203,14 @@ struct CompressedStream {
 	using Store = ByteStorage;
 	using Cache = BitCache<Store>;
 	using Encoder = VarCodeFilter<Cache, NBITS>;
-	Encoder varicode;
-	Cache cache;
 	Store store;
+	Cache cache;
+	Encoder varicode;
 };
 
 static std::string to_binary_str(uint8_t v)
 {
+	// Show byte as bit string (least-significant bit first).
 	char str[8];
 	for (uint32_t k = 0; k < 8; ++k) {
 		str[k] = (((v & 1) == 0) ? '0' : '1');
@@ -206,15 +221,18 @@ static std::string to_binary_str(uint8_t v)
 
 void process_file(std::istream& ifs)
 {
+	// Build one compressed stream per uppercase-normalized character.
 	using Stream = CompressedStream<3>;
 	std::array<Stream, 256> bstream;
 	std::string text = slurp(ifs);
 	uint32_t totalbytes = 0;
 	uint32_t origbytes = 0;
-	for (int ch : text) {
-		if (std::isprint(ch) != 0) {
-			int upch = std::toupper(ch);
-			bool isupper = (upch == ch);
+	for (char ch : text) {
+		unsigned char uch = static_cast<unsigned char>(ch);
+		if (std::isprint(uch) != 0) {
+			// Normalize by uppercase character, store whether original was uppercase.
+			int upch = std::toupper(uch);
+			bool isupper = (upch == static_cast<int>(uch));
 			bstream[upch].push(isupper);
 			origbytes += 1;
 		}
